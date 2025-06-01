@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileUtils {
-    private static final String SPACES_FILE = "data" + File.separator + "spaces.txt";
-    private static final String RESERVATIONS_FILE = "data" + File.separator + "reservations.txt";
-    private static final String USERS_FILE = "data" + File.separator + "users.txt";
+    private static final String SPACES_FILE = "data" + File.separator + "spaces.dat";
+    private static final String RESERVATIONS_FILE = "data" + File.separator + "reservations.dat";
+    private static final String USERS_FILE = "data" + File.separator + "users.dat";
 
     public static void saveSpaces(List<CoworkingSpace> spaces) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(SPACES_FILE))) {

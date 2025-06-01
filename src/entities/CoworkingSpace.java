@@ -1,6 +1,7 @@
 package entities;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 public class CoworkingSpace implements Serializable {
@@ -9,10 +10,10 @@ public class CoworkingSpace implements Serializable {
     private int id;
     private String type;
     private String roomDetails;
-    private double price;
+    private BigDecimal price;
     private boolean isAvailable;
 
-    public CoworkingSpace(String type, String roomDetails, double price) {
+    public CoworkingSpace(String type, String roomDetails, BigDecimal price) {
         this.id = idCounter++;
         this.type = type;
         this.roomDetails = roomDetails;
@@ -44,11 +45,11 @@ public class CoworkingSpace implements Serializable {
         this.roomDetails = roomDetails;
     }
 
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 

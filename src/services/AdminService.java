@@ -2,6 +2,7 @@ package services;
 
 import entities.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Scanner;
 
@@ -22,8 +23,8 @@ public class AdminService {
         System.out.print("Enter spaces details: ");
         String details = scanner.nextLine();
         System.out.print("Enter price of the space: ");
-        double capacity = Double.parseDouble(scanner.nextLine());
-        spaces.add(new CoworkingSpace(type, details, capacity));
+        BigDecimal price = new BigDecimal(scanner.nextLine());
+        spaces.add(new CoworkingSpace(type, details, price));
         System.out.println("Coworking space added successfully!");
     }
 
