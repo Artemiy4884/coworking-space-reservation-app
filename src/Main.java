@@ -2,6 +2,7 @@ import entities.*;
 import services.*;
 import utils.CustomExceptions.*;
 import utils.FileUtils;
+import utils.PluginClassLoader;
 
 import java.util.*;
 
@@ -25,7 +26,8 @@ public class Main {
                 System.out.println("Select user type by printing a number: " +
                         "\n1. Admin" +
                         "\n2. Customer" +
-                        "\n3. Exit from the program");
+                        "\n3. Exit from the program" +
+                        "\n4. Load custom class");
                 String userType = scanner.nextLine();
 
                 switch (userType) {
@@ -49,8 +51,25 @@ public class Main {
                             isWorking = false;
                         }
                         break;
+                    case "4":
+                        try {
+                            PluginClassLoader loader = new PluginClassLoader("plugins");
+                            Class<?> clazz = loader.loadClass("plugins.ReportPlugin");
+
+                            Object pluginInstance = clazz.getDeclaredConstructor().newInstance();
+
+                            if (pluginInstance instanceof plugins.Plugin plugin) {
+                                plugin.execute();
+                            } else {
+                                System.out.println("Loaded class is not a valid plugin.");
+                            }
+
+                        } catch (Exception e) {
+                            System.out.println("Error loading plugin: " + e.getMessage());
+                        }
+                        break;
                     default:
-                        throw new InvalidUserRoleException("Unknown selection. Please enter 1 or 2.");
+                        throw new InvalidUserRoleException("Unknown selection. Please enter 1, 2 to 3.");
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
