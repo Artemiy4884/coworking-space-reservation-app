@@ -3,39 +3,41 @@ package utils;
 import entities.*;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class FileUtils {
     private static final String SPACES_FILE = "data" + File.separator + "spaces.dat";
     private static final String RESERVATIONS_FILE = "data" + File.separator + "reservations.dat";
     private static final String USERS_FILE = "data" + File.separator + "users.dat";
 
-    public static void saveSpaces(List<CoworkingSpace> spaces) throws IOException {
+    public static void saveSpaces(Map<Integer, CoworkingSpace> spaces) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(SPACES_FILE))) {
             oos.writeObject(spaces);
         }
     }
 
-    public static List<CoworkingSpace> loadSpaces() {
+    public static Map<Integer, CoworkingSpace> loadSpaces() {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(SPACES_FILE))) {
-            return (List<CoworkingSpace>) ois.readObject();
+            return (Map<Integer, CoworkingSpace>) ois.readObject();
         } catch (Exception e) {
-            return new ArrayList<>();
+            return new HashMap<>();
         }
     }
 
-    public static void saveReservations(List<Reservation> reservations) throws IOException {
+    public static void saveReservations(Map<Integer, Reservation> reservations) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(RESERVATIONS_FILE))) {
             oos.writeObject(reservations);
         }
     }
 
-    public static List<Reservation> loadReservations() {
+    public static Map<Integer, Reservation> loadReservations() {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(RESERVATIONS_FILE))) {
-            return (List<Reservation>) ois.readObject();
+            return (Map<Integer, Reservation>) ois.readObject();
         } catch (Exception e) {
-            return new ArrayList<>();
+            return new HashMap<>();
         }
     }
 
