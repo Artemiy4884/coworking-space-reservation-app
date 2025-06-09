@@ -2,14 +2,15 @@ import entities.*;
 import services.*;
 import utils.CustomExceptions.*;
 import utils.FileUtils;
+import utils.MapDisplayer;
 
 import java.util.*;
 
 public class Main {
 
     private static final Scanner scanner = new Scanner(System.in);
-    private static List<CoworkingSpace> spaces = FileUtils.loadSpaces();
-    private static List<Reservation> reservations = FileUtils.loadReservations();
+    private static Map<Integer, CoworkingSpace> spaces = FileUtils.loadSpaces();
+    private static Map<Integer, Reservation> reservations = FileUtils.loadReservations();
     private static List<User> users = FileUtils.loadUsers();
     private static AdminService adminService = new AdminService(spaces, reservations, scanner);
     private static CustomerService customerService = new CustomerService(spaces, reservations, scanner);
@@ -101,7 +102,7 @@ public class Main {
                             adminService.removeSpace();
                             break;
                         case 3:
-                            adminService.viewAllReservations();
+                            MapDisplayer.display(reservations);
                             break;
                         case 4:
                             isWorking = false;
@@ -142,7 +143,7 @@ public class Main {
 
                     switch (choice) {
                         case 1:
-                            customerService.viewAllFreeSpaces();
+                            MapDisplayer.display(spaces);
                             break;
                         case 2:
                             customerService.makeReservation(username);
