@@ -5,6 +5,7 @@ import utils.MapDisplayer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class CustomerService {
@@ -33,37 +34,37 @@ public class CustomerService {
         System.out.println("Enter the time you want to end on: ");
         String endTime = date + " " + scanner.nextLine();
 
-        CoworkingSpace space = spaces.get(spaceId);
-        if (space != null) {
-            if (!space.isAvailable()) {
-                System.out.println("Space is not available.");
-                return;
-            }
-            space.setAvailable(false);
-
-            // Assuming you have a reservationIdCounter to generate unique IDs
-            Reservation reservation = new Reservation(username, spaceId, startTime, endTime);
-            reservations.put(reservation.getReservationId(), reservation);
-
-            System.out.println("Reservation successful.");
-        } else {
+        Optional<CoworkingSpace> optionalSpace = Optional.ofNullable(spaces.get(spaceId));
+        if (optionalSpace.isEmpty()) {
             System.out.println("Space with id " + spaceId + " not found.");
+            return;
         }
+
+        CoworkingSpace space = optionalSpace.get();
+        if (!space.isAvailable()) {
+            System.out.println("Space is not available.");
+            return;
+        }
+        space.setAvailable(false);
+
+        Reservation reservation = new Reservation(username, spaceId, startTime, endTime);
+        reservations.put(reservation.getReservationId(), reservation);
+
+        System.out.println("Reservation successful.");
     }
 
     public void viewMyReservations(String username) {
-        boolean found = false;
+        List<Reservation> userReservations = reservations.values().stream()
+                .filter(res -> res.getUsername().equals(username))
+                .toList();
 
-        for (Reservation reservation : reservations.values()) {
-            if (reservation.getUsername().equals(username)) {
-                System.out.println("----------------------------");
-                System.out.println(reservation);
-                found = true;
-            }
-        }
-
-        if (!found) {
+        if (userReservations.isEmpty()) {
             System.out.println("You have no reservations.");
+        } else {
+            userReservations.forEach(res -> {
+                System.out.println(res);
+                System.out.println("----------------------------");
+            });
         }
     }
 
@@ -74,30 +75,19 @@ public class CustomerService {
         System.out.print("Enter space id to cancel reservation: ");
         int spaceId = Integer.parseInt(scanner.nextLine());
 
-        Integer reservationKeyToRemove = null;
+        Optional<Map.Entry<Integer, Reservation>> toRemove = reservations.entrySet().stream()
+                .filter(e -> e.getValue().getUsername().equals(username) && e.getValue().getSpaceId() == spaceId)
+                .findFirst();
 
-        for (Map.Entry<Integer, Reservation> entry : reservations.entrySet()) {
-            Reservation reservation = entry.getValue();
-
-            if (reservation.getSpaceId() == spaceId && reservation.getUsername().equals(username)) {
-                reservationKeyToRemove = entry.getKey();
-                break;
-            }
-        }
-
-        if (reservationKeyToRemove != null) {
-            reservations.remove(reservationKeyToRemove);
-
-            CoworkingSpace space = spaces.get(spaceId);
-            if (space != null) {
-                space.setAvailable(true);
-            }
-
+        if (toRemove.isPresent()) {
+            reservations.remove(toRemove.get().getKey());
+            Optional.ofNullable(spaces.get(spaceId)).ifPresent(space -> space.setAvailable(true));
             System.out.println("Reservation canceled.");
         } else {
             System.out.println("Reservation not found.");
         }
     }
+
 
 }
 

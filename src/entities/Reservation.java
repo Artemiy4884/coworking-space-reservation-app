@@ -42,14 +42,12 @@ public class Reservation implements Serializable {
     }
 
     public static void initializeNextId(Map<Integer, Reservation> reservations) {
-        int maxId = 0;
-        for (Reservation reservation : reservations.values()) {
-            if (reservation.getReservationId() > maxId) {
-                maxId = reservation.getReservationId();
-            }
-        }
-        idCounter = maxId + 1;
+        idCounter = reservations.values().stream()
+                .mapToInt(Reservation::getReservationId)
+                .max()
+                .orElse(0) + 1;
     }
+
 
 
     @Override

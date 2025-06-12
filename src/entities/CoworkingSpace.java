@@ -62,14 +62,12 @@ public class CoworkingSpace implements Serializable {
     }
 
     public static void initializeNextId(Map<Integer, CoworkingSpace> spaces) {
-        int maxId = 0;
-        for (CoworkingSpace space : spaces.values()) {
-            if (space.getId() > maxId) {
-                maxId = space.getId();
-            }
-        }
-        idCounter = maxId + 1;
+        idCounter = spaces.values().stream()
+                .mapToInt(CoworkingSpace::getId)
+                .max()
+                .orElse(0) + 1;
     }
+
 
 
     @Override
