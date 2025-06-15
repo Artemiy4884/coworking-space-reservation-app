@@ -2,6 +2,7 @@ package entities;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 public class Reservation implements Serializable {
     private static int idCounter = 1;
@@ -40,15 +41,14 @@ public class Reservation implements Serializable {
         return endTime;
     }
 
-    public static void initializeNextId(List<Reservation> reservations) {
-        int maxId = 0;
-        for (Reservation reservation : reservations) {
-            if (reservation.getReservationId() > maxId) {
-                maxId = reservation.getReservationId();
-            }
-        }
-        idCounter = maxId + 1;
+    public static void initializeNextId(Map<Integer, Reservation> reservations) {
+        idCounter = reservations.values().stream()
+                .mapToInt(Reservation::getReservationId)
+                .max()
+                .orElse(0) + 1;
     }
+
+
 
     @Override
     public String toString() {
