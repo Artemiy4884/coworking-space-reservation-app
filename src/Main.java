@@ -2,14 +2,16 @@ import entities.*;
 import services.*;
 import utils.CustomExceptions.*;
 import utils.FileUtils;
+import utils.MapDisplayer;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Main {
 
     private static final Scanner scanner = new Scanner(System.in);
-    private static List<CoworkingSpace> spaces = FileUtils.loadSpaces();
-    private static List<Reservation> reservations = FileUtils.loadReservations();
+    private static Map<Integer, CoworkingSpace> spaces = FileUtils.loadSpaces();
+    private static Map<Integer, Reservation> reservations = FileUtils.loadReservations();
     private static List<User> users = FileUtils.loadUsers();
     private static AdminService adminService = new AdminService(spaces, reservations, scanner);
     private static CustomerService customerService = new CustomerService(spaces, reservations, scanner);
@@ -18,44 +20,85 @@ public class Main {
         CoworkingSpace.initializeNextId(spaces);
         Reservation.initializeNextId(reservations);
 
-        boolean isWorking = true;
-        while (isWorking) {
+        AtomicBoolean isWorking = new AtomicBoolean(true);
+
+        Map<Integer, Runnable> basicActions = new HashMap<>();
+
+        basicActions.put(1, Main::adminMenuDisplayer);
+        basicActions.put(2, Main::userMenuDisplayer);
+        basicActions.put(3, () -> {
+            System.out.println("Do you want to exit? (yes/no)");
+            String exit = scanner.nextLine();
+            if (exit.equalsIgnoreCase("yes")) {
+                try {
+                    FileUtils.saveSpaces(spaces);
+                    FileUtils.saveReservations(reservations);
+                    FileUtils.saveUsers(users);
+                } catch (Exception e) {
+                    System.out.println("Error saving data: " + e.getMessage());
+                }
+                isWorking.set(false);
+            }});
+
+        while (isWorking.get()) {
             System.out.println("Welcome to the Coworking Space Reservation System!");
             try {
                 System.out.println("Select user type by printing a number: " +
                         "\n1. Admin" +
                         "\n2. Customer" +
                         "\n3. Exit from the program");
-                String userType = scanner.nextLine();
+                Integer userType = Integer.parseInt(scanner.nextLine());
 
-                switch (userType) {
-                    case "1":
-                        adminMenuDisplayer();
-                        break;
-                    case "2":
-                        userMenuDisplayer();
-                        break;
-                    case "3":
-                        System.out.println("Do you want to exit? (yes/no)");
-                        String exit = scanner.nextLine();
-                        if (exit.equalsIgnoreCase("yes")) {
-                            try {
-                                FileUtils.saveSpaces(spaces);
-                                FileUtils.saveReservations(reservations);
-                                FileUtils.saveUsers(users);
-                            } catch (Exception e) {
-                                System.out.println("Error saving data: " + e.getMessage());
-                            }
-                            isWorking = false;
-                        }
-                        break;
-                    default:
-                        throw new InvalidUserRoleException("Unknown selection. Please enter 1 or 2.");
+                Runnable action = basicActions.get(userType);
+                if(action != null){
+                    action.run();
+                }else{
+                    throw new InvalidUserRoleException("Invalid user type! Please choose from existing variants");
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
             }
         }
+    }
+
+    public static void adminMenuDisplayer() {
+        AtomicBoolean isWorking = new AtomicBoolean(true);
+
+        Map<Integer, Runnable> adminActions = new HashMap<>();
+        adminActions.put(1, () -> adminService.addSpace());
+        adminActions.put(2, () -> adminService.removeSpace());
+        adminActions.put(3, () -> MapDisplayer.display(reservations));
+        adminActions.put(4, () -> isWorking.set(false));
+
+        String[] userData = loginSystem();
+        String username = userData[0];
+        String password = userData[1];
+
+        try {
+            if (validateUser(username, password, "admin")) {
+                while (isWorking.get()) {
+                    System.out.println("Please, select one of the options by writing a number: " +
+                            "\n1. Add new coworking space" +
+                            "\n2. Remove coworking space" +
+                            "\n3. View all reservations" +
+                            "\n4. Exit to choosing user menu");
+                    int choice = Integer.parseInt(scanner.nextLine());
+
+                    Runnable action = adminActions.get(choice);
+
+                    if (action != null) {
+                        action.run();
+                    } else {
+                        throw new InvalidCredentialsException("Invalid option!");
+                    }
+                }
+            } else {
+                throw new InvalidCredentialsException("Invalid admin credentials. Please check your username and password.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+
     }
 
     public static String[] loginSystem() {
@@ -77,48 +120,6 @@ public class Main {
         return false;
     }
 
-    public static void adminMenuDisplayer() {
-        String[] userData = loginSystem();
-        String username = userData[0];
-        String password = userData[1];
-
-        try {
-            if (validateUser(username, password, "admin")) {
-                boolean isWorking = true;
-                while (isWorking) {
-                    System.out.println("Please, select one of the options by writing a number: " +
-                            "\n1. Add new coworking space" +
-                            "\n2. Remove coworking space" +
-                            "\n3. View all reservations" +
-                            "\n4. Exit to choosing user menu");
-                    int choice = Integer.parseInt(scanner.nextLine());
-
-                    switch (choice) {
-                        case 1:
-                            adminService.addSpace();
-                            break;
-                        case 2:
-                            adminService.removeSpace();
-                            break;
-                        case 3:
-                            adminService.viewAllReservations();
-                            break;
-                        case 4:
-                            isWorking = false;
-                            break;
-                        default:
-                            throw new InvalidCredentialsException("Invalid option. Please choose the number of one of the options!");
-                    }
-                }
-            } else {
-                throw new InvalidCredentialsException("Invalid admin credentials. Please check your username and password.");
-            }
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-
-    }
-
     public static void userMenuDisplayer() {
         System.out.println("Do you have an account? (yes/no)");
         String hasAccount = scanner.nextLine();
@@ -128,10 +129,18 @@ public class Main {
         String username = userData[0];
         String password = userData[1];
 
+        AtomicBoolean isWorking = new AtomicBoolean(true);
+
+        Map<Integer, Runnable> userActions = new HashMap<>();
+        userActions.put(1, () -> MapDisplayer.display(spaces));
+        userActions.put(2, () -> customerService.makeReservation(username));
+        userActions.put(3, () -> customerService.viewMyReservations(username));
+        userActions.put(4, () -> customerService.cancelReservation(username));
+        userActions.put(5, () -> isWorking.set(false));
+
         try {
             if (validateUser(username, password, "customer")) {
-                boolean isWorking = true;
-                while (isWorking) {
+                while (isWorking.get()) {
                     System.out.println("Customer Menu: " +
                             "\n1. View all free spaces" +
                             "\n2. Reserve a coworking space" +
@@ -140,24 +149,11 @@ public class Main {
                             "\n5. Exit to choosing user menu");
                     int choice = Integer.parseInt(scanner.nextLine());
 
-                    switch (choice) {
-                        case 1:
-                            customerService.viewAllFreeSpaces();
-                            break;
-                        case 2:
-                            customerService.makeReservation(username);
-                            break;
-                        case 3:
-                            customerService.viewMyReservations(username);
-                            break;
-                        case 4:
-                            customerService.cancelReservation(username);
-                            break;
-                        case 5:
-                            isWorking = false;
-                            break;
-                        default:
-                            throw new InvalidCredentialsException("Invalid option. Please choose the number of one of the options!");
+                    Runnable action = userActions.get(choice);
+                    if (action != null) {
+                        action.run();
+                    }else{
+                        throw new InvalidCredentialsException("Invalid option!");
                     }
                 }
             } else {
@@ -173,7 +169,7 @@ public class Main {
             System.out.print("Enter new username: ");
             String newUsername = scanner.nextLine();
             for (User user : users) {
-                if (user.getUsername().equals(newUsername)) {
+                if (user.getUsername().equalsIgnoreCase(newUsername)) {
                     throw new DuplicateUsernameException("User with such username already exists. Please try again with other username.");
                 }
             }

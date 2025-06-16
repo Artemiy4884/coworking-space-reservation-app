@@ -2,7 +2,7 @@ package entities;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Map;
 
 public class CoworkingSpace implements Serializable {
     private static int idCounter = 1;
@@ -61,15 +61,14 @@ public class CoworkingSpace implements Serializable {
         isAvailable = available;
     }
 
-    public static void initializeNextId(List<CoworkingSpace> spaces) {
-        int maxId = 0;
-        for (CoworkingSpace space : spaces) {
-            if (space.getId() > maxId) {
-                maxId = space.getId();
-            }
-        }
-        idCounter = maxId + 1;
+    public static void initializeNextId(Map<Integer, CoworkingSpace> spaces) {
+        idCounter = spaces.values().stream()
+                .mapToInt(CoworkingSpace::getId)
+                .max()
+                .orElse(0) + 1;
     }
+
+
 
     @Override
     public String toString() {
