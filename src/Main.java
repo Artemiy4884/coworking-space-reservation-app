@@ -169,7 +169,7 @@ public class Main {
             System.out.print("Enter new username: ");
             String newUsername = scanner.nextLine();
             for (User user : users) {
-                if (user.getUsername().equals(newUsername)) {
+                if (user.getUsername().equalsIgnoreCase(newUsername)) {
                     throw new DuplicateUsernameException("User with such username already exists. Please try again with other username.");
                 }
             }
