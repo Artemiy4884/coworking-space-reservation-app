@@ -55,7 +55,7 @@ public class CustomerService {
 
     public void viewMyReservations(String username) {
         List<Reservation> userReservations = reservations.values().stream()
-                .filter(res -> res.getUsername().equals(username))
+                .filter(res -> res.getUsername().equalsIgnoreCase(username))
                 .toList();
 
         if (userReservations.isEmpty()) {
@@ -76,8 +76,8 @@ public class CustomerService {
         int spaceId = Integer.parseInt(scanner.nextLine());
 
         Optional<Map.Entry<Integer, Reservation>> toRemove = reservations.entrySet().stream()
-                .filter(e -> e.getValue().getUsername().equals(username) && e.getValue().getSpaceId() == spaceId)
-                .findFirst();
+                .filter(e -> e.getValue().getUsername().equalsIgnoreCase(username) && e.getValue().getSpaceId() == spaceId)
+                .findAny();
 
         if (toRemove.isPresent()) {
             reservations.remove(toRemove.get().getKey());
