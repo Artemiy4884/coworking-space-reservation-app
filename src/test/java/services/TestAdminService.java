@@ -3,6 +3,7 @@ package services;
 import entities.CoworkingSpace;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -31,6 +32,7 @@ public class TestAdminService {
     }
 
     @Test
+    @DisplayName("Test of correct addition of the new coworking spaces")
     void testAddSpace() {
         when(scannerMock.nextLine()).thenReturn("Private Office", "Room B", "150");
         adminService.addSpace();
@@ -44,6 +46,7 @@ public class TestAdminService {
     }
 
     @Test
+    @DisplayName("Test of correct removal of coworking spaces")
     void testAdminRemoveSpace() {
         CoworkingSpace space = new CoworkingSpace("Open Desk", "Near window", BigDecimal.valueOf(50));
         spaces.put(space.getId(), space);

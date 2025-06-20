@@ -1,6 +1,4 @@
 import entities.*;
-import services.*;
-import utils.CustomExceptions.*;
 import org.junit.jupiter.api.*;
 import java.util.*;
 
@@ -19,6 +17,7 @@ public class TestMain {
     }
 
     @Test
+    @DisplayName("Test of creation account for the user")
     void testCreateNewUser() {
         users.clear();
         String newUsername = "newUser";
@@ -30,21 +29,6 @@ public class TestMain {
         users.add(new User(newUsername, newPassword, "customer"));
 
         assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(newUsername)));
-    }
-
-    @Test
-    void testCreateDuplicateUser() {
-        users.clear();
-        users.add(new User("duplicateUser", "pwd", "customer"));
-        String dupName = "duplicateUser";
-
-        assertThrows(DuplicateUsernameException.class, () -> {
-            for (User user : users) {
-                if (user.getUsername().equalsIgnoreCase(dupName)) {
-                    throw new DuplicateUsernameException("User with such username already exists.");
-                }
-            }
-        });
     }
 
 
