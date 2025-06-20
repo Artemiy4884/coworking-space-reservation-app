@@ -2,6 +2,7 @@ package services;
 
 import entities.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -30,6 +31,7 @@ public class TestCustomerService {
     }
 
     @Test
+    @DisplayName("Test customers possibility of reservation coworking space")
     void testCustomerMakeReservation() {
         when(scannerMock.nextLine())
                 .thenReturn(String.valueOf(space.getId()))
@@ -44,6 +46,25 @@ public class TestCustomerService {
     }
 
     @Test
+    @DisplayName("Test to check unavailability to reserve occupied coworking space")
+    void testReservationWithOccupiedSpace() {
+        CoworkingSpace space = new CoworkingSpace("Shared", "Desk B", new BigDecimal("10.00"));
+        space.setAvailable(false);
+        spaces.put(space.getId(), space);
+
+        when(scannerMock.nextLine())
+                .thenReturn(String.valueOf(space.getId()))
+                .thenReturn("2025-06-26")
+                .thenReturn("09:00")
+                .thenReturn("11:00");
+
+        customerService.makeReservation("John");
+
+        assertTrue(reservations.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Test of user canceling the reservation")
     void testCustomerCancelReservation() {
         space.setAvailable(false);
 
@@ -56,5 +77,15 @@ public class TestCustomerService {
 
         assertEquals(0, reservations.size());
         assertTrue(spaces.get(space.getId()).isAvailable());
+    }
+
+    @Test
+    @DisplayName("Test of failed cancel for non-existent reservation")
+    void testCancelNonExistentReservation() {
+        when(scannerMock.nextLine()).thenReturn("999");
+
+        customerService.cancelReservation("Johny");
+
+        assertTrue(reservations.isEmpty());
     }
 }
