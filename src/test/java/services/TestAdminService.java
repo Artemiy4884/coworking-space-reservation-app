@@ -1,60 +1,65 @@
 package services;
 
+import dao.CoworkingSpaceDAO;
 import entities.CoworkingSpace;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
+import org.junit.jupiter.api.*;
 import java.math.BigDecimal;
-import java.util.HashMap;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Scanner;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestAdminService {
 
-    private Map<Integer, CoworkingSpace> spaces;
     private AdminService adminService;
     private Scanner scannerMock;
 
     @BeforeEach
     void setUp() {
-
         scannerMock = mock(Scanner.class);
-        spaces = new HashMap<>();
-        Map<Integer, entities.Reservation> reservations = new HashMap<>();
-
-        adminService = new AdminService(spaces, reservations, scannerMock);
+        adminService = new AdminService(scannerMock);
     }
 
     @Test
-    @DisplayName("Test of correct addition of the new coworking spaces")
-    void testAddSpace() {
+    @Order(1)
+    @DisplayName("Test addition of coworking space through AdminService and DAO")
+    void testAddSpace() throws SQLException {
         when(scannerMock.nextLine()).thenReturn("Private Office", "Room B", "150");
-        adminService.addSpace();
-        Assertions.assertEquals(1, spaces.size());
 
-        CoworkingSpace space = spaces.values().iterator().next();
-        Assertions.assertEquals("Private Office", space.getType());
-        Assertions.assertEquals("Room B", space.getRoomDetails());
-        Assertions.assertEquals(new BigDecimal("150"), space.getPrice());
-        Assertions.assertTrue(space.isAvailable());
+        int originalSize = CoworkingSpaceDAO.getAllSpaces().size();
+
+        adminService.addSpace();
+
+        Map<Integer, CoworkingSpace> spaces = CoworkingSpaceDAO.getAllSpaces();
+        assertEquals(originalSize + 1, spaces.size());
+
+        CoworkingSpace lastAdded = spaces.values().stream()
+                .filter(s -> s.getType().equals("Private Office") && s.getRoomDetails().equals("Room B"))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(lastAdded);
+        assertEquals(0, lastAdded.getPrice().compareTo(new BigDecimal("150")));
+
+        assertTrue(lastAdded.isAvailable());
+
+        CoworkingSpaceDAO.removeSpace(lastAdded.getId());
     }
 
     @Test
-    @DisplayName("Test of correct removal of coworking spaces")
-    void testAdminRemoveSpace() {
-        CoworkingSpace space = new CoworkingSpace("Open Desk", "Near window", BigDecimal.valueOf(50));
-        spaces.put(space.getId(), space);
+    @Order(2)
+    @DisplayName("Test removal of coworking space through AdminService and DAO")
+    void testAdminRemoveSpace() throws SQLException {
+        CoworkingSpace space = new CoworkingSpace("Hot Desk", "Corner", BigDecimal.valueOf(99));
+        CoworkingSpaceDAO.addSpace(space);
 
         when(scannerMock.nextLine()).thenReturn(String.valueOf(space.getId()));
 
         adminService.removeSpace();
 
-        assertFalse(spaces.containsKey(space.getId()));
+        assertFalse(CoworkingSpaceDAO.getAllSpaces().containsKey(space.getId()));
     }
 }

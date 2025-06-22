@@ -1,25 +1,23 @@
+import dao.CoworkingSpaceDAO;
+import dao.ReservationDAO;
+import dao.UserDAO;
 import entities.*;
 import services.*;
 import utils.CustomExceptions.*;
 import utils.FileUtils;
 import utils.MapDisplayer;
 
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Main {
 
     private static final Scanner scanner = new Scanner(System.in);
-    private static Map<Integer, CoworkingSpace> spaces = FileUtils.loadSpaces();
-    private static Map<Integer, Reservation> reservations = FileUtils.loadReservations();
-    private static List<User> users = FileUtils.loadUsers();
-    private static AdminService adminService = new AdminService(spaces, reservations, scanner);
-    private static CustomerService customerService = new CustomerService(spaces, reservations, scanner);
+    private static AdminService adminService = new AdminService(scanner);
+    private static CustomerService customerService = new CustomerService(scanner);
 
     public static void main(String[] args) {
-        CoworkingSpace.initializeNextId(spaces);
-        Reservation.initializeNextId(reservations);
-
         AtomicBoolean isWorking = new AtomicBoolean(true);
 
         Map<Integer, Runnable> basicActions = new HashMap<>();
@@ -30,15 +28,9 @@ public class Main {
             System.out.println("Do you want to exit? (yes/no)");
             String exit = scanner.nextLine();
             if (exit.equalsIgnoreCase("yes")) {
-                try {
-                    FileUtils.saveSpaces(spaces);
-                    FileUtils.saveReservations(reservations);
-                    FileUtils.saveUsers(users);
-                } catch (Exception e) {
-                    System.out.println("Error saving data: " + e.getMessage());
-                }
                 isWorking.set(false);
-            }});
+            }
+        });
 
         while (isWorking.get()) {
             System.out.println("Welcome to the Coworking Space Reservation System!");
@@ -50,9 +42,9 @@ public class Main {
                 Integer userType = Integer.parseInt(scanner.nextLine());
 
                 Runnable action = basicActions.get(userType);
-                if(action != null){
+                if (action != null) {
                     action.run();
-                }else{
+                } else {
                     throw new InvalidUserRoleException("Invalid user type! Please choose from existing variants");
                 }
             } catch (Exception e) {
@@ -64,17 +56,13 @@ public class Main {
     public static void adminMenuDisplayer() {
         AtomicBoolean isWorking = new AtomicBoolean(true);
 
-        Map<Integer, Runnable> adminActions = new HashMap<>();
-        adminActions.put(1, () -> adminService.addSpace());
-        adminActions.put(2, () -> adminService.removeSpace());
-        adminActions.put(3, () -> MapDisplayer.display(reservations));
-        adminActions.put(4, () -> isWorking.set(false));
-
-        String[] userData = loginSystem();
-        String username = userData[0];
-        String password = userData[1];
-
         try {
+            Map<Integer, Runnable> adminActions = getAdminActions(isWorking);
+
+            String[] userData = loginSystem();
+            String username = userData[0];
+            String password = userData[1];
+
             if (validateUser(username, password, "admin")) {
                 while (isWorking.get()) {
                     System.out.println("Please, select one of the options by writing a number: " +
@@ -95,10 +83,25 @@ public class Main {
             } else {
                 throw new InvalidCredentialsException("Invalid admin credentials. Please check your username and password.");
             }
-        } catch (Exception e) {
+        } catch (InvalidCredentialsException e) {
             System.out.println("Error: " + e.getMessage());
         }
 
+    }
+
+    private static Map<Integer, Runnable> getAdminActions(AtomicBoolean isWorking) {
+        Map<Integer, Runnable> adminActions = new HashMap<>();
+        adminActions.put(1, () -> adminService.addSpace());
+        adminActions.put(2, () -> adminService.removeSpace());
+        adminActions.put(3, () -> {
+            try {
+                MapDisplayer.display(ReservationDAO.getAllReservations());
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+        });
+        adminActions.put(4, () -> isWorking.set(false));
+        return adminActions;
     }
 
     public static String[] loginSystem() {
@@ -110,12 +113,16 @@ public class Main {
     }
 
     public static boolean validateUser(String username, String password, String role) {
-        for (User user : users) {
-            if (user.getUsername().equals(username) &&
-                    user.getPassword().equals(password) &&
-                    user.getRole().equals(role)) {
-                return true;
+        try {
+            for (User user : UserDAO.getAllUsers()) {
+                if (user.getUsername().equals(username) &&
+                        user.getPassword().equals(password) &&
+                        user.getRole().equals(role)) {
+                    return true;
+                }
             }
+        }catch (SQLException e){
+            System.out.println(e.getMessage());
         }
         return false;
     }
@@ -131,12 +138,7 @@ public class Main {
 
         AtomicBoolean isWorking = new AtomicBoolean(true);
 
-        Map<Integer, Runnable> userActions = new HashMap<>();
-        userActions.put(1, () -> MapDisplayer.display(spaces));
-        userActions.put(2, () -> customerService.makeReservation(username));
-        userActions.put(3, () -> customerService.viewMyReservations(username));
-        userActions.put(4, () -> customerService.cancelReservation(username));
-        userActions.put(5, () -> isWorking.set(false));
+        Map<Integer, Runnable> userActions = getCustomerActions(username, isWorking);
 
         try {
             if (validateUser(username, password, "customer")) {
@@ -152,7 +154,7 @@ public class Main {
                     Runnable action = userActions.get(choice);
                     if (action != null) {
                         action.run();
-                    }else{
+                    } else {
                         throw new InvalidCredentialsException("Invalid option!");
                     }
                 }
@@ -164,10 +166,27 @@ public class Main {
         }
     }
 
+    private static Map<Integer, Runnable> getCustomerActions(String username, AtomicBoolean isWorking) {
+        Map<Integer, Runnable> userActions = new HashMap<>();
+        userActions.put(1, () -> {
+            try {
+                MapDisplayer.display(CoworkingSpaceDAO.getAllSpaces());
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+        });
+        userActions.put(2, () -> customerService.makeReservation(username));
+        userActions.put(3, () -> customerService.viewMyReservations(username));
+        userActions.put(4, () -> customerService.cancelReservation(username));
+        userActions.put(5, () -> isWorking.set(false));
+        return userActions;
+    }
+
     public static void createNewUser() {
         try {
             System.out.print("Enter new username: ");
             String newUsername = scanner.nextLine();
+            List<User> users = UserDAO.getAllUsers();
             for (User user : users) {
                 if (user.getUsername().equalsIgnoreCase(newUsername)) {
                     throw new DuplicateUsernameException("User with such username already exists. Please try again with other username.");

@@ -1,6 +1,7 @@
 package entities;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -10,10 +11,10 @@ public class Reservation implements Serializable {
     private int reservationId;
     private String username;
     private int spaceId;
-    private String startTime;
-    private String endTime;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
 
-    public Reservation(String username, int spaceId, String startTime, String endTime) {
+    public Reservation(String username, int spaceId, LocalDateTime startTime, LocalDateTime endTime) {
         this.reservationId = idCounter++;
         this.username = username;
         this.spaceId = spaceId;
@@ -25,6 +26,10 @@ public class Reservation implements Serializable {
         return reservationId;
     }
 
+    public void setReservationId(int reservationId) {
+        this.reservationId = reservationId;
+    }
+
     public String getUsername() {
         return username;
     }
@@ -33,11 +38,11 @@ public class Reservation implements Serializable {
         return spaceId;
     }
 
-    public String getStartTime() {
+    public LocalDateTime getStartTime() {
         return startTime;
     }
 
-    public String getEndTime() {
+    public LocalDateTime getEndTime() {
         return endTime;
     }
 

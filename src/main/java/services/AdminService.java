@@ -1,20 +1,17 @@
 package services;
 
+import dao.CoworkingSpaceDAO;
 import entities.*;
 import utils.MapDisplayer;
 
 import java.math.BigDecimal;
-import java.util.Map;
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class AdminService {
-    private Map<Integer, CoworkingSpace> spaces;
-    private Map<Integer, Reservation> reservations;
     private Scanner scanner;
 
-    public AdminService(Map<Integer, CoworkingSpace> spaces, Map<Integer, Reservation> reservations, Scanner scanner) {
-        this.spaces = spaces;
-        this.reservations = reservations;
+    public AdminService(Scanner scanner) {
         this.scanner = scanner;
     }
 
@@ -27,23 +24,28 @@ public class AdminService {
 
         System.out.print("Enter price of the space: ");
         BigDecimal price = new BigDecimal(scanner.nextLine());
-
-        CoworkingSpace space = new CoworkingSpace(type, details, price);
-        spaces.put(space.getId(), space);
+        try {
+            CoworkingSpaceDAO.addSpace(new CoworkingSpace(type, details, price));
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
         System.out.println("Coworking space added successfully!");
     }
 
     public void removeSpace() {
-        MapDisplayer.display(spaces);
+        try {
+            MapDisplayer.display(CoworkingSpaceDAO.getAllSpaces());
 
-        System.out.print("Enter space id to remove: ");
-        int id = Integer.parseInt(scanner.nextLine());
+            System.out.print("Enter space id to remove: ");
+            int id = Integer.parseInt(scanner.nextLine());
 
-        if (spaces.containsKey(id)) {
-            spaces.remove(id);
-            System.out.println("Space removed successfully!");
-        } else {
-            System.out.println("Space not found.");
+            if (CoworkingSpaceDAO.removeSpace(id)) {
+                System.out.println("Space removed successfully!");
+            } else {
+                System.out.println("Space not found.");
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
     }
 }
