@@ -19,4 +19,10 @@ public class CustomExceptions {
             super(message);
         }
     }
+
+    public static class wrongTimeInputException extends Exception {
+        public wrongTimeInputException(String message) {
+            super(message);
+        }
+    }
 }
