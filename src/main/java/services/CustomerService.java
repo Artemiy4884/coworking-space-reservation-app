@@ -1,73 +1,95 @@
 package services;
 
+import dao.CoworkingSpaceDAO;
+import dao.ReservationDAO;
 import entities.*;
 import utils.MapDisplayer;
+import utils.CustomExceptions.wrongTimeInputException;
 
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
 
 public class CustomerService {
-    private Map<Integer, CoworkingSpace> spaces;
-    private Map<Integer, Reservation> reservations;
     private Scanner scanner;
 
-    public CustomerService(Map<Integer, CoworkingSpace> spaces, Map<Integer, Reservation> reservations, Scanner scanner) {
-        this.spaces = spaces;
-        this.reservations = reservations;
+    public CustomerService(Scanner scanner) {
+
         this.scanner = scanner;
     }
 
     public void makeReservation(String username) {
-        MapDisplayer.display(spaces);
+        try {
+            MapDisplayer.display(CoworkingSpaceDAO.getAllSpaces());
 
-        System.out.print("Enter spaces id you want to reserve: ");
-        int spaceId = Integer.parseInt(scanner.nextLine());
+            System.out.print("Enter spaces id you want to reserve: ");
+            int spaceId = Integer.parseInt(scanner.nextLine());
 
-        System.out.println("Enter the date you want to reserve: ");
-        String date = scanner.nextLine();
+            System.out.println("Enter the date you want to reserve in the format yyyy-mm-dd: ");
+            String date = scanner.nextLine();
 
-        System.out.println("Enter the time you want to start on: ");
-        String startTime = date + " " + scanner.nextLine();
+            System.out.println("Enter the time you want to start on in the format HH:MM: ");
+            String startTime = date + " " + scanner.nextLine();
 
-        System.out.println("Enter the time you want to end on: ");
-        String endTime = date + " " + scanner.nextLine();
+            System.out.println("Enter the time you want to end on in the format HH:MM: ");
+            String endTime = date + " " + scanner.nextLine();
 
-        Optional<CoworkingSpace> optionalSpace = Optional.ofNullable(spaces.get(spaceId));
-        if (optionalSpace.isEmpty()) {
-            System.out.println("Space with id " + spaceId + " not found.");
-            return;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+            LocalDateTime locStartTime = LocalDateTime.parse(startTime, formatter);
+            LocalDateTime locEndTime = LocalDateTime.parse(endTime, formatter);
+
+            if (!locEndTime.isAfter(locStartTime)) {
+                throw new wrongTimeInputException("End time must be after start time.");
+            }
+
+            Optional<CoworkingSpace> optionalSpace = Optional.ofNullable(CoworkingSpaceDAO.getAllSpaces().get(spaceId));
+            if (optionalSpace.isEmpty()) {
+                System.out.println("Space with id " + spaceId + " not found.");
+                return;
+            }
+
+            CoworkingSpace space = optionalSpace.get();
+            if (!space.isAvailable()) {
+                System.out.println("Space is not available.");
+                return;
+            }
+
+            ReservationDAO.addReservation(new Reservation(username, spaceId, locStartTime, locEndTime));
+            CoworkingSpaceDAO.updateAvailability(spaceId, false);
+            System.out.println("Reservation successful.");
+        } catch (DateTimeParseException e) {
+            System.out.println("Invalid date or time format. Please use yyyy-MM-dd for the date and HH:mm for time.");
+        } catch (wrongTimeInputException e) {
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
-
-        CoworkingSpace space = optionalSpace.get();
-        if (!space.isAvailable()) {
-            System.out.println("Space is not available.");
-            return;
-        }
-        space.setAvailable(false);
-
-        Reservation reservation = new Reservation(username, spaceId, startTime, endTime);
-        reservations.put(reservation.getReservationId(), reservation);
-
-        System.out.println("Reservation successful.");
     }
 
     public void viewMyReservations(String username) {
-        List<Reservation> userReservations = reservations.values().stream()
-                .filter(res -> res.getUsername().equalsIgnoreCase(username))
-                .toList();
+        try {
+            List<Reservation> userReservations = ReservationDAO.getAllReservations().values().stream()
+                    .filter(res -> res.getUsername().equalsIgnoreCase(username))
+                    .toList();
 
-        if (userReservations.isEmpty()) {
-            System.out.println("You have no reservations.");
-        } else {
-            userReservations.forEach(res -> {
-                System.out.println(res);
-                System.out.println("----------------------------");
-            });
+            if (userReservations.isEmpty()) {
+                System.out.println("You have no reservations.");
+            } else {
+                userReservations.forEach(res -> {
+                    System.out.println(res);
+                    System.out.println("----------------------------");
+                });
+            }
+        }catch(SQLException e){
+            System.out.println(e.getMessage());
         }
     }
-
 
     public void cancelReservation(String username) {
         viewMyReservations(username);
@@ -75,19 +97,26 @@ public class CustomerService {
         System.out.print("Enter space id to cancel reservation: ");
         int spaceId = Integer.parseInt(scanner.nextLine());
 
-        Optional<Map.Entry<Integer, Reservation>> toRemove = reservations.entrySet().stream()
-                .filter(e -> e.getValue().getUsername().equalsIgnoreCase(username) && e.getValue().getSpaceId() == spaceId)
-                .findAny();
+        try {
+            Optional<Map.Entry<Integer, Reservation>> toRemove = ReservationDAO.getAllReservations().entrySet().stream()
+                    .filter(e -> e.getValue().getUsername().equalsIgnoreCase(username)
+                    && e.getValue().getSpaceId() == spaceId).findAny();
 
-        if (toRemove.isPresent()) {
-            reservations.remove(toRemove.get().getKey());
-            Optional.ofNullable(spaces.get(spaceId)).ifPresent(space -> space.setAvailable(true));
-            System.out.println("Reservation canceled.");
-        } else {
-            System.out.println("Reservation not found.");
+            if (toRemove.isPresent()) {
+                int reservationId = toRemove.get().getKey();
+                int spaceIdToFree = toRemove.get().getValue().getSpaceId();
+
+                CoworkingSpaceDAO.updateAvailability(spaceIdToFree, true);
+                ReservationDAO.removeReservation(reservationId);
+
+                System.out.println("Reservation canceled.");
+            } else {
+                System.out.println("Reservation not found.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error while canceling reservation: " + e.getMessage());
         }
     }
-
 
 }
 
