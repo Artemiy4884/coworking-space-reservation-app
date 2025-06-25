@@ -1,63 +1,41 @@
 package dao;
 
 import entities.Reservation;
+import jakarta.persistence.EntityManager;
 
-import java.sql.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class ReservationDAO {
+public class ReservationDAO extends BaseDAO {
 
-    public static Map<Integer, Reservation> getAllReservations() throws SQLException {
-        Map<Integer, Reservation> reservations = new HashMap<>();
-        String sql = "SELECT * FROM reservations";
-
-        try (Connection connection = DBConnector.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resSet = statement.executeQuery(sql)) {
-
-            while (resSet.next()) {
-                Reservation reservation = new Reservation(
-                        resSet.getString("username"),
-                        resSet.getInt("space_id"),
-                        resSet.getTimestamp("start_time").toLocalDateTime(),
-                        resSet.getTimestamp("end_time").toLocalDateTime()
-                );
-                reservation.setReservationId(resSet.getInt("reservation_id"));
-                reservations.put(resSet.getInt("reservation_id"), reservation);
+    public static Map<Integer, Reservation> getAllReservations() {
+        try (EntityManager entityManager = entityManager()) {
+            List<Reservation> reservationList = entityManager.createQuery("SELECT r FROM Reservation r", Reservation.class).getResultList();
+            Map<Integer, Reservation> reservations = new HashMap<>();
+            for (Reservation reservation : reservationList) {
+                reservations.put(reservation.getReservationId(), reservation);
             }
-        }
-
-        return reservations;
-    }
-
-    public static void addReservation(Reservation reservation) throws SQLException {
-        String sql = "INSERT INTO reservations (username, space_id, start_time, end_time) VALUES (?, ?, ?, ?)";
-
-        try (Connection connection = DBConnector.getConnection();
-             PreparedStatement prepStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            prepStatement.setString(1, reservation.getUsername());
-            prepStatement.setInt(2, reservation.getSpaceId());
-            prepStatement.setTimestamp(3, Timestamp.valueOf(reservation.getStartTime()));
-            prepStatement.setTimestamp(4, Timestamp.valueOf(reservation.getEndTime()));
-
-            prepStatement.executeUpdate();
-
-            try (ResultSet keys = prepStatement.getGeneratedKeys()) {
-                if (keys.next()) {
-                    int generatedId = keys.getInt(1);
-                    reservation.setReservationId(generatedId);
-                }
-            }
+            return reservations;
         }
     }
 
+    public static void addReservation(Reservation reservation) {
+        try (EntityManager entityManager = entityManager()) {
+            entityManager.getTransaction().begin();
+            entityManager.persist(reservation);
+            entityManager.getTransaction().commit();
+        }
+    }
 
-    public static void removeReservation(int reservationId) throws SQLException {
-        try (Connection connection = DBConnector.getConnection();
-             PreparedStatement prepStatement = connection.prepareStatement("DELETE FROM reservations WHERE reservation_id = ?")) {
-            prepStatement.setInt(1, reservationId);
-            prepStatement.executeUpdate();
+    public static void removeReservation(int id) {
+        try (EntityManager entityManager = entityManager()) {
+            Reservation reservation = entityManager.find(Reservation.class, id);
+            if (reservation != null) {
+                entityManager.getTransaction().begin();
+                entityManager.remove(reservation);
+                entityManager.getTransaction().commit();
+            }
         }
     }
 }

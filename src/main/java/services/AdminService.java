@@ -5,7 +5,6 @@ import entities.*;
 import utils.MapDisplayer;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.util.Scanner;
 
 public class AdminService {
@@ -24,28 +23,20 @@ public class AdminService {
 
         System.out.print("Enter price of the space: ");
         BigDecimal price = new BigDecimal(scanner.nextLine());
-        try {
-            CoworkingSpaceDAO.addSpace(new CoworkingSpace(type, details, price));
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
+        CoworkingSpaceDAO.addSpace(new CoworkingSpace(type, details, price));
         System.out.println("Coworking space added successfully!");
     }
 
     public void removeSpace() {
-        try {
-            MapDisplayer.display(CoworkingSpaceDAO.getAllSpaces());
+        MapDisplayer.display(CoworkingSpaceDAO.getAllSpaces());
 
-            System.out.print("Enter space id to remove: ");
-            int id = Integer.parseInt(scanner.nextLine());
+        System.out.print("Enter space id to remove: ");
+        int id = Integer.parseInt(scanner.nextLine());
 
-            if (CoworkingSpaceDAO.removeSpace(id)) {
-                System.out.println("Space removed successfully!");
-            } else {
-                System.out.println("Space not found.");
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
+        if (CoworkingSpaceDAO.removeSpace(id)) {
+            System.out.println("Space removed successfully!");
+        } else {
+            System.out.println("Space not found.");
         }
     }
 }

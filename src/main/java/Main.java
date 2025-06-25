@@ -93,13 +93,7 @@ public class Main {
         Map<Integer, Runnable> adminActions = new HashMap<>();
         adminActions.put(1, () -> adminService.addSpace());
         adminActions.put(2, () -> adminService.removeSpace());
-        adminActions.put(3, () -> {
-            try {
-                MapDisplayer.display(ReservationDAO.getAllReservations());
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-        });
+        adminActions.put(3, () -> MapDisplayer.display(ReservationDAO.getAllReservations()));
         adminActions.put(4, () -> isWorking.set(false));
         return adminActions;
     }
@@ -113,16 +107,12 @@ public class Main {
     }
 
     public static boolean validateUser(String username, String password, String role) {
-        try {
-            for (User user : UserDAO.getAllUsers()) {
-                if (user.getUsername().equals(username) &&
-                        user.getPassword().equals(password) &&
-                        user.getRole().equals(role)) {
-                    return true;
-                }
+        for (User user : UserDAO.getAllUsers()) {
+            if (user.getUsername().equals(username) &&
+                    user.getPassword().equals(password) &&
+                    user.getRole().equals(role)) {
+                return true;
             }
-        }catch (SQLException e){
-            System.out.println(e.getMessage());
         }
         return false;
     }
@@ -168,13 +158,7 @@ public class Main {
 
     private static Map<Integer, Runnable> getCustomerActions(String username, AtomicBoolean isWorking) {
         Map<Integer, Runnable> userActions = new HashMap<>();
-        userActions.put(1, () -> {
-            try {
-                MapDisplayer.display(CoworkingSpaceDAO.getAllSpaces());
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-        });
+        userActions.put(1, () -> MapDisplayer.display(CoworkingSpaceDAO.getAllSpaces()));
         userActions.put(2, () -> customerService.makeReservation(username));
         userActions.put(3, () -> customerService.viewMyReservations(username));
         userActions.put(4, () -> customerService.cancelReservation(username));
@@ -195,7 +179,6 @@ public class Main {
             System.out.print("Enter new password: ");
             String newPassword = scanner.nextLine();
             users.add(new User(newUsername, newPassword, "customer"));
-            FileUtils.saveUsers(users);
             System.out.println("Account created successfully. You can now log in.");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
