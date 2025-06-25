@@ -1,16 +1,27 @@
 package entities;
 
-import java.io.Serializable;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.util.Map;
 
-public class CoworkingSpace implements Serializable {
+@Entity
+@Table(name = "coworking_spaces")
+public class CoworkingSpace{
     private static int idCounter = 1;
 
+    @Id
+    @Column(nullable = false, unique = true)
     private int id;
+
     private String type;
+
+    @Column(name = "room_details")
     private String roomDetails;
+
     private BigDecimal price;
+
+    @Column(name = "is_available")
     private boolean isAvailable;
 
     public CoworkingSpace(String type, String roomDetails, BigDecimal price) {
@@ -20,6 +31,8 @@ public class CoworkingSpace implements Serializable {
         this.price = price;
         this.isAvailable = true;
     }
+
+    public CoworkingSpace() {}
 
     public int getId() {
         return id;

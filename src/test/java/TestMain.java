@@ -1,4 +1,4 @@
-import dao.DBConnector;
+import utils.DBConnector;
 import dao.UserDAO;
 import entities.User;
 import org.junit.jupiter.api.*;

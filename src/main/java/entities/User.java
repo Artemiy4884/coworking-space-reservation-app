@@ -1,10 +1,17 @@
 package entities;
 
-import java.io.Serializable;
+import jakarta.persistence.*;
 
-public class User implements Serializable {
+@Entity
+@Table(name = "users")
+public class User {
+
+    @Id
+    @Column(nullable = false, unique = true)
     private String username;
+
     private String password;
+
     private String role;
 
     public User(String username, String password, String role) {
@@ -12,6 +19,8 @@ public class User implements Serializable {
         this.password = password;
         this.role = role;
     }
+
+    public User() {}
 
     public String getUsername() {
         return username;

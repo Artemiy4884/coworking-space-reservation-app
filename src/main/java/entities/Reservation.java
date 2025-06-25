@@ -1,17 +1,28 @@
 package entities;
 
-import java.io.Serializable;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 
-public class Reservation implements Serializable {
+@Entity
+@Table(name = "reservations")
+public class Reservation{
     private static int idCounter = 1;
 
+    @Id
+    @Column(name = "reservation_id",nullable = false, unique = true)
     private int reservationId;
+
     private String username;
+
+    @Column(name = "space_id")
     private int spaceId;
+
+    @Column(name = "start_time")
     private LocalDateTime startTime;
+
+    @Column(name = "end_time")
     private LocalDateTime endTime;
 
     public Reservation(String username, int spaceId, LocalDateTime startTime, LocalDateTime endTime) {
@@ -21,6 +32,8 @@ public class Reservation implements Serializable {
         this.startTime = startTime;
         this.endTime = endTime;
     }
+
+    public Reservation() {}
 
     public int getReservationId() {
         return reservationId;
