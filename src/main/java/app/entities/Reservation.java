@@ -1,4 +1,4 @@
-package entities;
+package app.entities;
 
 import jakarta.persistence.*;
 
@@ -8,9 +8,9 @@ import java.util.Map;
 @Entity
 @Table(name = "reservations")
 public class Reservation{
-    private static int idCounter = 1;
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reservation_id",nullable = false, unique = true)
     private int reservationId;
 
@@ -26,7 +26,6 @@ public class Reservation{
     private LocalDateTime endTime;
 
     public Reservation(String username, int spaceId, LocalDateTime startTime, LocalDateTime endTime) {
-        this.reservationId = idCounter++;
         this.username = username;
         this.spaceId = spaceId;
         this.startTime = startTime;
@@ -58,15 +57,6 @@ public class Reservation{
     public LocalDateTime getEndTime() {
         return endTime;
     }
-
-    public static void initializeNextId(Map<Integer, Reservation> reservations) {
-        idCounter = reservations.values().stream()
-                .mapToInt(Reservation::getReservationId)
-                .max()
-                .orElse(0) + 1;
-    }
-
-
 
     @Override
     public String toString() {

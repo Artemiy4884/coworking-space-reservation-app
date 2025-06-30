@@ -1,4 +1,4 @@
-package entities;
+package app.entities;
 
 import jakarta.persistence.*;
 
@@ -8,9 +8,9 @@ import java.util.Map;
 @Entity
 @Table(name = "coworking_spaces")
 public class CoworkingSpace{
-    private static int idCounter = 1;
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, unique = true)
     private int id;
 
@@ -25,7 +25,6 @@ public class CoworkingSpace{
     private boolean isAvailable;
 
     public CoworkingSpace(String type, String roomDetails, BigDecimal price) {
-        this.id = idCounter++;
         this.type = type;
         this.roomDetails = roomDetails;
         this.price = price;
@@ -36,10 +35,6 @@ public class CoworkingSpace{
 
     public int getId() {
         return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getType() {
@@ -73,15 +68,6 @@ public class CoworkingSpace{
     public void setAvailable(boolean available) {
         isAvailable = available;
     }
-
-    public static void initializeNextId(Map<Integer, CoworkingSpace> spaces) {
-        idCounter = spaces.values().stream()
-                .mapToInt(CoworkingSpace::getId)
-                .max()
-                .orElse(0) + 1;
-    }
-
-
 
     @Override
     public String toString() {
