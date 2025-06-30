@@ -3,6 +3,8 @@ package services;
 import dao.*;
 import entities.*;
 import org.junit.jupiter.api.*;
+import utils.DBConnector;
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -24,11 +26,7 @@ public class TestCustomerService {
     void setUp() {
         scannerMock = mock(Scanner.class);
         customerService = new CustomerService(scannerMock);
-        try {
-            UserDAO.addUser(new User("customer1", "test", "customer"));
-        }catch (SQLException e){
-            throw new RuntimeException(e);
-        }
+        UserDAO.addUser(new User("customer1", "test", "customer"));
 
     }
 
@@ -57,9 +55,7 @@ public class TestCustomerService {
         reservations.values().stream()
                 .filter(r -> r.getUsername().equals("customer1"))
                 .forEach(r -> {
-                    try {
-                        ReservationDAO.removeReservation(r.getReservationId());
-                    } catch (SQLException ignored) {}
+                    ReservationDAO.removeReservation(r.getReservationId());
                 });
 
         CoworkingSpaceDAO.removeSpace(space.getId());
@@ -131,7 +127,7 @@ public class TestCustomerService {
     @AfterEach
     void cleanUp(){
         try (Connection connection = DBConnector.getConnection();
-            PreparedStatement prepStatement = connection.prepareStatement("DELETE FROM users WHERE username = ?")) {
+             PreparedStatement prepStatement = connection.prepareStatement("DELETE FROM users WHERE username = ?")) {
             prepStatement.setString(1, "customer1");
             prepStatement.executeUpdate();
         } catch (SQLException e) {

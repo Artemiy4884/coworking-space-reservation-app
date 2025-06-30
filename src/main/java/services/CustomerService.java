@@ -67,27 +67,21 @@ public class CustomerService {
             System.out.println("Invalid date or time format. Please use yyyy-MM-dd for the date and HH:mm for time.");
         } catch (wrongTimeInputException e) {
             System.out.println(e.getMessage());
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
         }
     }
 
     public void viewMyReservations(String username) {
-        try {
-            List<Reservation> userReservations = ReservationDAO.getAllReservations().values().stream()
-                    .filter(res -> res.getUsername().equalsIgnoreCase(username))
-                    .toList();
+        List<Reservation> userReservations = ReservationDAO.getAllReservations().values().stream()
+                .filter(res -> res.getUsername().equalsIgnoreCase(username))
+                .toList();
 
-            if (userReservations.isEmpty()) {
-                System.out.println("You have no reservations.");
-            } else {
-                userReservations.forEach(res -> {
-                    System.out.println(res);
-                    System.out.println("----------------------------");
-                });
-            }
-        }catch(SQLException e){
-            System.out.println(e.getMessage());
+        if (userReservations.isEmpty()) {
+            System.out.println("You have no reservations.");
+        } else {
+            userReservations.forEach(res -> {
+                System.out.println(res);
+                System.out.println("----------------------------");
+            });
         }
     }
 
@@ -97,24 +91,20 @@ public class CustomerService {
         System.out.print("Enter space id to cancel reservation: ");
         int spaceId = Integer.parseInt(scanner.nextLine());
 
-        try {
-            Optional<Map.Entry<Integer, Reservation>> toRemove = ReservationDAO.getAllReservations().entrySet().stream()
-                    .filter(e -> e.getValue().getUsername().equalsIgnoreCase(username)
-                    && e.getValue().getSpaceId() == spaceId).findAny();
+        Optional<Map.Entry<Integer, Reservation>> toRemove = ReservationDAO.getAllReservations().entrySet().stream()
+                .filter(e -> e.getValue().getUsername().equalsIgnoreCase(username)
+                && e.getValue().getSpaceId() == spaceId).findAny();
 
-            if (toRemove.isPresent()) {
-                int reservationId = toRemove.get().getKey();
-                int spaceIdToFree = toRemove.get().getValue().getSpaceId();
+        if (toRemove.isPresent()) {
+            int reservationId = toRemove.get().getKey();
+            int spaceIdToFree = toRemove.get().getValue().getSpaceId();
 
-                CoworkingSpaceDAO.updateAvailability(spaceIdToFree, true);
-                ReservationDAO.removeReservation(reservationId);
+            CoworkingSpaceDAO.updateAvailability(spaceIdToFree, true);
+            ReservationDAO.removeReservation(reservationId);
 
-                System.out.println("Reservation canceled.");
-            } else {
-                System.out.println("Reservation not found.");
-            }
-        } catch (SQLException e) {
-            System.out.println("Error while canceling reservation: " + e.getMessage());
+            System.out.println("Reservation canceled.");
+        } else {
+            System.out.println("Reservation not found.");
         }
     }
 
