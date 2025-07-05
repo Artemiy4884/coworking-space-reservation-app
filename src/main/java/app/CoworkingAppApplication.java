@@ -1,19 +1,18 @@
 package app;
 
-import app.ui.*;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationContext;
+import app.ui.AdminConsoleWorkflow;
+import app.ui.ConsoleUI;
+import app.ui.CustomerConsoleWorkflow;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-@SpringBootApplication
 public class CoworkingAppApplication {
 
     public static void main(String[] args) {
-        ApplicationContext ctx = SpringApplication.run(CoworkingAppApplication.class, args);
+        AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext(AppConfig.class);
 
-        ConsoleUI console = ctx.getBean(ConsoleUI.class);
-        AdminConsoleWorkflow adminFlow = ctx.getBean(AdminConsoleWorkflow.class);
-        CustomerConsoleWorkflow customerFlow = ctx.getBean(CustomerConsoleWorkflow.class);
+        ConsoleUI console = appContext.getBean(ConsoleUI.class);
+        AdminConsoleWorkflow adminFlow = appContext.getBean(AdminConsoleWorkflow.class);
+        CustomerConsoleWorkflow customerFlow = appContext.getBean(CustomerConsoleWorkflow.class);
 
         boolean running = true;
         while (running) {
@@ -28,5 +27,6 @@ public class CoworkingAppApplication {
         }
 
         console.println("Goodbye!");
+        appContext.close();
     }
 }
