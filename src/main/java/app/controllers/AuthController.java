@@ -1,5 +1,6 @@
 package app.controllers;
 
+import app.dto.UserDTO;
 import app.services.AuthService;
 import app.utils.CustomExceptions.DuplicateUsernameException;
 import app.utils.JWTUtil;
@@ -21,12 +22,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestParam String username,
-                                        @RequestParam String password,
-                                        @RequestParam String role) {
-        boolean valid = authService.validateUser(username, password, role);
+    public ResponseEntity<String> login(@RequestBody UserDTO userDTO) {
+        boolean valid = authService.validateUser(
+                userDTO.getUsername(),
+                userDTO.getPassword(),
+                userDTO.getRole());
         if (valid) {
-            return ResponseEntity.ok(jwtUtil.generateToken(username, role));
+            return ResponseEntity.ok(jwtUtil.generateToken(userDTO.getUsername(), userDTO.getRole()));
         } else {
             return ResponseEntity.status(401).body("Invalid credentials");
         }

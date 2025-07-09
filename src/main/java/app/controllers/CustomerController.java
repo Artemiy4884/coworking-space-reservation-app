@@ -1,5 +1,6 @@
 package app.controllers;
 
+import app.dto.ReservationDTO;
 import app.entities.CoworkingSpace;
 import app.entities.Reservation;
 import app.services.CustomerService;
@@ -21,7 +22,7 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
-    @GetMapping("/spaces/available")
+    @GetMapping("/spaces")
     public List<CoworkingSpace> getAvailableSpaces() {
         return customerService.getAvailableSpaces();
     }
@@ -32,16 +33,18 @@ public class CustomerController {
     }
 
     @PostMapping("/reservations/new")
-    public Reservation makeReservation(@RequestParam String username,
-                                       @RequestParam Integer spaceId,
-                                       @RequestParam String start,
-                                       @RequestParam String end) throws wrongTimeInputException {
-        LocalDateTime startTime = LocalDateTime.parse(start);
-        LocalDateTime endTime = LocalDateTime.parse(end);
-        return customerService.makeReservation(username, spaceId, startTime, endTime);
+    public Reservation makeReservation(@RequestBody ReservationDTO reservationDTO) throws wrongTimeInputException {
+        LocalDateTime startTime = LocalDateTime.parse(reservationDTO.getTimeStart());
+        LocalDateTime endTime = LocalDateTime.parse(reservationDTO.getTimeEnd());
+        return customerService.makeReservation(
+                reservationDTO.getUsername(),
+                reservationDTO.getSpaceId(),
+                startTime,
+                endTime
+        );
     }
 
-    @DeleteMapping("/reservations/cancel/{id}")
+    @DeleteMapping("/reservations/{id}")
     public String cancelReservation(@RequestParam String username, @PathVariable Integer id) {
         boolean cancelled = customerService.cancelReservation(username, id);
         return cancelled ? "Reservation cancelled" : "Reservation not found or not yours";
