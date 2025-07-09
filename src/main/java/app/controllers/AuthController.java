@@ -2,6 +2,7 @@ package app.controllers;
 
 import app.services.AuthService;
 import app.utils.CustomExceptions.DuplicateUsernameException;
+import app.utils.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,10 +12,12 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final JWTUtil jwtUtil;
 
     @Autowired
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, JWTUtil jwtUtil) {
         this.authService = authService;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/login")
@@ -23,7 +26,7 @@ public class AuthController {
                                         @RequestParam String role) {
         boolean valid = authService.validateUser(username, password, role);
         if (valid) {
-            return ResponseEntity.ok("Login successful");
+            return ResponseEntity.ok(jwtUtil.generateToken(username, role));
         } else {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
