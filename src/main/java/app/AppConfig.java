@@ -18,8 +18,13 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.ViewResolver;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
+
 @Configuration
 @EnableTransactionManagement
+@EnableWebMvc
 @ComponentScan(basePackages = "app")
 @EnableJpaRepositories(basePackages = "app")
 public class AppConfig {
@@ -54,5 +59,13 @@ public class AppConfig {
     @Bean
     public PlatformTransactionManager transactionManager(EntityManagerFactory emf) {
         return new JpaTransactionManager(emf);
+    }
+
+    @Bean
+    public ViewResolver viewResolver() {
+        InternalResourceViewResolver resolver = new InternalResourceViewResolver();
+        resolver.setPrefix("/WEB-INF/views/");
+        resolver.setSuffix(".jsp");
+        return resolver;
     }
 }
