@@ -1,65 +1,52 @@
 package app.controllers;
 
-import app.entities.*;
-import app.dao.*;
+import app.dto.ReservationDTO;
+import app.entities.CoworkingSpace;
+import app.entities.Reservation;
+import app.services.CustomerService;
+import app.utils.CustomExceptions.wrongTimeInputException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
+import java.time.LocalDateTime;
+import java.util.List;
+
+@RestController
 @RequestMapping("/customer")
 public class CustomerController {
 
-    private final ReservationRepository reservationRepository;
-    private final CoworkingSpaceRepository spaceRepository;
-    private final UserRepository userRepository;
+    private final CustomerService customerService;
 
     @Autowired
-    public CustomerController(
-            ReservationRepository reservationRepository,
-            CoworkingSpaceRepository spaceRepository,
-            UserRepository userRepository
-    ) {
-        this.reservationRepository = reservationRepository;
-        this.spaceRepository = spaceRepository;
-        this.userRepository = userRepository;
-    }
-
-    @GetMapping("/dashboard")
-    public String dashboard() {
-        return "customer-dashboard";
+    public CustomerController(CustomerService customerService) {
+        this.customerService = customerService;
     }
 
     @GetMapping("/spaces")
-    public String listSpaces(Model model) {
-        model.addAttribute("spaces", spaceRepository.findAll());
-        return "customer-spaces";
+    public List<CoworkingSpace> getAvailableSpaces() {
+        return customerService.getAvailableSpaces();
     }
 
-    @GetMapping("/reservations/{username}")
-    public String listReservations(Model model, @PathVariable String username) {
-        model.addAttribute("reservations", reservationRepository.findByUsernameIgnoreCase(username));
-        return "customer-reservations";
+    @GetMapping("/reservations")
+    public List<Reservation> getReservations(@RequestParam String username) {
+        return customerService.getReservations(username);
     }
 
-    @GetMapping("/reservations/create")
-    public String showCreateReservationForm(Model model) {
-        model.addAttribute("reservation", new Reservation());
-        model.addAttribute("spaces", spaceRepository.findAll());
-        model.addAttribute("users", userRepository.findAll());
-        return "customer-create-reservation";
+    @PostMapping("/reservations/new")
+    public Reservation makeReservation(@RequestBody ReservationDTO reservationDTO) throws wrongTimeInputException {
+        LocalDateTime startTime = LocalDateTime.parse(reservationDTO.getTimeStart());
+        LocalDateTime endTime = LocalDateTime.parse(reservationDTO.getTimeEnd());
+        return customerService.makeReservation(
+                reservationDTO.getUsername(),
+                reservationDTO.getSpaceId(),
+                startTime,
+                endTime
+        );
     }
 
-    @PostMapping("/reservations/create")
-    public String createReservation(@ModelAttribute Reservation reservation) {
-        reservationRepository.save(reservation);
-        return "redirect:/customer/reservations";
-    }
-
-    @PostMapping("/reservations/cancel/{id}")
-    public String cancelReservation(@PathVariable int id) {
-        reservationRepository.deleteById(id);
-        return "redirect:/customer/reservations";
+    @DeleteMapping("/reservations/{id}")
+    public String cancelReservation(@RequestParam String username, @PathVariable Integer id) {
+        boolean cancelled = customerService.cancelReservation(username, id);
+        return cancelled ? "Reservation cancelled" : "Reservation not found or not yours";
     }
 }

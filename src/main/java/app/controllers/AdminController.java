@@ -1,75 +1,43 @@
 package app.controllers;
 
+import app.dto.CoworkingSpaceDTO;
 import app.entities.CoworkingSpace;
-import app.dao.*;
+import app.entities.Reservation;
+import app.services.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
+import java.math.BigDecimal;
+import java.util.List;
+
+@RestController
 @RequestMapping("/admin")
 public class AdminController {
 
-    private final ReservationRepository reservationRepository;
-    private final CoworkingSpaceRepository spaceRepository;
-    private final UserRepository userRepository;
+    private final AdminService adminService;
 
     @Autowired
-    public AdminController(
-            ReservationRepository reservationRepository,
-            CoworkingSpaceRepository spaceRepository,
-            UserRepository userRepository
-    ) {
-        this.reservationRepository = reservationRepository;
-        this.spaceRepository = spaceRepository;
-        this.userRepository = userRepository;
+    public AdminController(AdminService adminService) {
+        this.adminService = adminService;
     }
 
-    @GetMapping("/dashboard")
-    public String dashboard() {
-        return "admin-dashboard";
+    @PostMapping("/spaces")
+    public CoworkingSpace addSpace(@RequestBody CoworkingSpaceDTO spaceDTO) {
+        return adminService.addSpace(
+                spaceDTO.getType(),
+                spaceDTO.getDetails(),
+                spaceDTO.getPrice()
+        );
+    }
+
+    @DeleteMapping("/spaces/{id}")
+    public String removeSpace(@PathVariable Integer id) {
+        boolean removed = adminService.removeSpace(id);
+        return removed ? "Space removed" : "Space not found";
     }
 
     @GetMapping("/reservations")
-    public String listReservations(Model model) {
-        model.addAttribute("reservations", reservationRepository.findAll());
-        return "admin-reservations";
-    }
-
-    @PostMapping("/reservations/delete/{id}")
-    public String deleteReservation(@PathVariable int id) {
-        reservationRepository.deleteById(id);
-        return "redirect:/admin/reservations";
-    }
-
-    @GetMapping("/spaces")
-    public String listSpaces(Model model) {
-        model.addAttribute("spaces", spaceRepository.findAll());
-        return "admin-spaces";
-    }
-
-    @GetMapping("/spaces/create")
-    public String showCreateSpaceForm(Model model) {
-        model.addAttribute("space", new CoworkingSpace());
-        return "admin-create-space";
-    }
-
-    @PostMapping("/spaces/create")
-    public String createSpace(@ModelAttribute CoworkingSpace space) {
-        spaceRepository.save(space);
-        return "redirect:/admin/spaces";
-    }
-
-    @PostMapping("/spaces/delete/{id}")
-    public String deleteSpace(@PathVariable int id) {
-        spaceRepository.deleteById(id);
-        return "redirect:/admin/spaces";
-    }
-
-    @GetMapping("/users")
-    public String listUsers(Model model) {
-        model.addAttribute("users", userRepository.findAll());
-        return "admin-users";
+    public List<Reservation> getReservations() {
+        return adminService.getReservations();
     }
 }
