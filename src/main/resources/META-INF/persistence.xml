@@ -1,8 +1,8 @@
 <persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0">
     <persistence-unit name="coworkingPU" transaction-type="RESOURCE_LOCAL">
-        <class>entities.User</class>
-        <class>entities.CoworkingSpace</class>
-        <class>entities.Reservation</class>
+        <class>app.entities.User</class>
+        <class>app.entities.CoworkingSpace</class>
+        <class>app.entities.Reservation</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
