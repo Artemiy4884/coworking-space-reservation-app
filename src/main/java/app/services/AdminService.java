@@ -4,6 +4,8 @@ import app.dao.CoworkingSpaceRepository;
 import app.dao.ReservationRepository;
 import app.entities.CoworkingSpace;
 import app.entities.Reservation;
+import app.coworkingSpaceFactories.CoworkingSpaceFactory;
+import app.coworkingSpaceFactories.CoworkingSpaceFactoryProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -23,7 +25,8 @@ public class AdminService {
     }
 
     public CoworkingSpace addSpace(String type, String details, BigDecimal price) {
-        CoworkingSpace space = new CoworkingSpace(type, details, price);
+        CoworkingSpaceFactory factory = CoworkingSpaceFactoryProvider.getFactory(type);
+        CoworkingSpace space = factory.createSpace(details, price);
         return spaceRepository.save(space);
     }
 
