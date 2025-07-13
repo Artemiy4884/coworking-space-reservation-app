@@ -4,6 +4,7 @@ import io.jsonwebtoken.*;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JWTUtil {
@@ -17,6 +18,7 @@ public class JWTUtil {
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .setId(UUID.randomUUID().toString())
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
     }

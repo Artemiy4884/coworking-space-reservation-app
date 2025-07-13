@@ -1,5 +1,6 @@
 package app.controllers;
 
+import app.auth.TokenBlacklist;
 import app.dto.UserDTO;
 import app.services.AuthService;
 import app.utils.CustomExceptions.DuplicateUsernameException;
@@ -14,11 +15,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final JWTUtil jwtUtil;
+    private final TokenBlacklist tokenBlacklist;
 
     @Autowired
-    public AuthController(AuthService authService, JWTUtil jwtUtil) {
+    public AuthController(AuthService authService, JWTUtil jwtUtil, TokenBlacklist tokenBlacklist) {
         this.authService = authService;
         this.jwtUtil = jwtUtil;
+        this.tokenBlacklist = tokenBlacklist;
     }
 
     @PostMapping("/login")
@@ -44,4 +47,15 @@ public class AuthController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PostMapping("/auth/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwt = authHeader.substring(7);
+            String jti = jwtUtil.extractClaims(jwt).getId();
+            tokenBlacklist.blacklist(jti);
+        }
+        return ResponseEntity.ok().build();
+    }
+
 }

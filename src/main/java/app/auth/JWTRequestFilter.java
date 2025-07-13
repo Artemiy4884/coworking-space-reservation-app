@@ -19,9 +19,11 @@ import java.util.Collections;
 public class JWTRequestFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
+    private final TokenBlacklist tokenBlacklist;
 
-    public JWTRequestFilter(JWTUtil jwtUtil) {
+    public JWTRequestFilter(JWTUtil jwtUtil, TokenBlacklist tokenBlacklist) {
         this.jwtUtil = jwtUtil;
+        this.tokenBlacklist = tokenBlacklist;
     }
 
     @Override
@@ -36,6 +38,14 @@ public class JWTRequestFilter extends OncePerRequestFilter {
             String jwt = authHeader.substring(7);
             try {
                 Claims claims = jwtUtil.extractClaims(jwt);
+
+                String jti = claims.getId();
+
+                if (tokenBlacklist.isBlacklisted(jti)) {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has been revoked");
+                    return;
+                }
+
                 username = claims.getSubject();
                 role = claims.get("role", String.class);
             } catch (Exception e) {
@@ -57,3 +67,4 @@ public class JWTRequestFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 }
+
