@@ -9,3 +9,4 @@ public class CoworkingAppApplication {
         SpringApplication.run(CoworkingAppApplication.class, args);
     }
 }
+
